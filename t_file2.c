@@ -7,6 +7,14 @@
 #include <pthread.h>
 #include <unistd.h>
 
+volatile int running_threads = 0;
+pthread_mutex_t running_mutex;
+int numoffiles = 0;
+pthread_t * threads;
+int i = 0;
+char ** filenames; 
+//int * flags;
+
 struct arg_struct {
 
 	const char *fpath;
@@ -32,36 +40,40 @@ int isCSV(const char* name)
 void
 * display_info2(void * arguments)
 {
-	//sleep(2);	
+	sleep(1);
+	//
+	//struct arg_struct args2 = (struct arg_struct) arguments;
+	//pthread_mutex_lock(&running_mutex);	
+	//struct arg_struct * args = malloc(sizeof(*args));
+	
+//	args->fpath = malloc(10000);
+//	args->sb = malloc(10000);
+//	args->ftwbuf = malloc(10000);
+//	
+//	*args = *(struct arg_struct *) arguments;	
+	//fprintf(stdout,"%s\n",  args->fpath);
+//	pthread_mutex_unlock(&running_mutex);	
+	
+	char * path = (char *) arguments;
 
-	struct arg_struct *args = (struct arg_struct *)arguments;	
+
+	fprintf(stdout,"%s\n",  path);
+	
+	/*
+	pthread_mutex_lock(&running_mutex);
 
 
+	//printf("%s\n", args->fpath);
     if( args->tflag == FTW_F && isCSV(args->fpath)){
 		fprintf(stdout,"%s \n", args->fpath);
 	
 	}
+*/
+//	pthread_mutex_unlock(&running_mutex);
+//	running_threads--;
+//	pthread_mutex_unlock(&running_mutex);
+
 }
-
-
-static int
-display_info(const char *fpath, const struct stat *sb,
-             int tflag, struct FTW *ftwbuf)
-{
-    if( tflag == FTW_F && isCSV(fpath)){
-
-
-	printf("%-3s %2d %7jd   %-40s %d %s\n",
-        (tflag == FTW_D) ?   "d"   : (tflag == FTW_DNR) ? "dnr" :
-        (tflag == FTW_DP) ?  "dp"  : (tflag == FTW_F) ?   "f" :
-        (tflag == FTW_NS) ?  "ns"  : (tflag == FTW_SL) ?  "sl" :
-        (tflag == FTW_SLN) ? "sln" : "???",
-        ftwbuf->level, (intmax_t) sb->st_size,
-        fpath, ftwbuf->base, fpath + ftwbuf->base);
-	}
-	return 0;           /* To tell nftw() to continue */
-}
-
 
 
 static int
@@ -69,37 +81,87 @@ display_info_threaded(const char *fpath, const struct stat *sb,
              int tflag, struct FTW *ftwbuf)
 {
 		
+	//printf("start2\n");
 	pthread_t tid;
-	static int i = 0;
-		
-	struct arg_struct args;
+	
+	struct arg_struct args_local;
+	args_local.fpath = fpath;
+	args_local.sb = sb;
+	args_local.tflag = tflag;
+	args_local.ftwbuf = ftwbuf;	
+	
+	struct arg_struct * args = malloc(sizeof(*args));
+	args->fpath = malloc(10000);
+	args->sb = malloc(10000);
+	args->ftwbuf = malloc(10000);
+	*args = args_local;
+	//filenames[i] = fpath;
+	//flags[i] = tflag;
+	//printf("%s\n:",args->fpath);
+	//printf("mallocend\n");
+	char * copy_of_path = strdup(fpath);
+//	pthread_mutex_lock(&running_mutex);
 
-	args.fpath = fpath;
-	args.sb = sb;
-	args.tflag = tflag;
-	args.ftwbuf = ftwbuf;
+//	running_threads++;
+//	printf("%d",running_threads);
+	
+//	pthread_mutex_unlock(&running_mutex);
+	//pthread_mutex_lock(&running_mutex);
+	pthread_create(&threads[i++], NULL, &display_info2,(void *) copy_of_path);
+	//pthread_mutex_unlock(&running_mutex);
 
-	pthread_create(&tid, NULL, &display_info2, (void *) &args);
-	pthread_join(tid, NULL);
-
+	//	fprintf(stdout,"%d \n" , &threads[i]);
+	//pthread_join(threads[i++], NULL);
 	return 0;
 }
 
 
+static int
+count_files(const char *fpath, const struct stat *sb,
+             int tflag, struct FTW *ftwbuf)
+{
+
+	++numoffiles;
+	return 0;
+}
+
+	
 int
 main(int argc, char *argv[])
 {
 	int flags = 0;
-	int i = 0;
+	pthread_mutex_init(&running_mutex, NULL);
+	int x = nftw((argc < 2) ? "." : argv[1], count_files, 20, flags);
+    
+	//fprintf(stdout, "num %d: \n" , numoffiles);
+	numoffiles++;
+	threads = malloc(sizeof(pthread_t) * numoffiles);
 
-   if (nftw((argc < 2) ? "." : argv[1], display_info_threaded, 20, flags) == -1) {
+	filenames = malloc(sizeof(char *) * numoffiles);
+	//flags = malloc(sizeof(int) * numoffiles);
+
+	if(threads == NULL){
+		fprintf(stdout,"Too many expected threads, out of memory");
+	}
+
+	//printf("start1\n");
+   	if (nftw((argc < 2) ? "." : argv[1], display_info_threaded, 20, flags) == -1) {
         perror("nftw");
         exit(EXIT_FAILURE);
     }
 
-
    printf("\n"); //cause of zsh
+  		
+	for( i = 1; i <  numoffiles; i++){
+//		fprintf(stdout, "%d \n" , &threads[i]);
+		pthread_join(threads[i], NULL);	
+	}
+	pthread_mutex_destroy(&running_mutex);
+/*   while (running_threads > 0){
+		sleep(5);
 
+   }
 
+   */
    exit(EXIT_SUCCESS);
 }
