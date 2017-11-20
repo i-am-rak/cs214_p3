@@ -362,7 +362,7 @@ void sortCSVFile(char * filename1,char * token, char * outdir){
 							//movies[count].data[index-p1] = '\0';
 							//fprintf(stdout, "%d: %s\n",count, movies[count].data);	
 							trim(movies[count].data);
-							break;
+								break;
 						}
 						p1 = index+1;
 						index++;
