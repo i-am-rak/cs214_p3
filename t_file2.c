@@ -7,13 +7,13 @@
 #include <pthread.h>
 #include <unistd.h>
 
-volatile int running_threads = 0;
 pthread_mutex_t running_mutex;
 int numoffiles = 0;
 pthread_t * threads;
-int i = 0;
-char ** filenames; 
-//int * flags;
+int index_threads = 0;
+char * outdir_global;
+char * type_global ;
+
 
 struct arg_struct {
 
@@ -40,37 +40,14 @@ int isCSV(const char* name)
 void
 * display_info2(void * arguments)
 {
-	sleep(1);
-	//
-	//struct arg_struct args2 = (struct arg_struct) arguments;
-	//pthread_mutex_lock(&running_mutex);	
-	//struct arg_struct * args = malloc(sizeof(*args));
-	
-//	args->fpath = malloc(10000);
-//	args->sb = malloc(10000);
-//	args->ftwbuf = malloc(10000);
-//	
-//	*args = *(struct arg_struct *) arguments;	
-	//fprintf(stdout,"%s\n",  args->fpath);
-//	pthread_mutex_unlock(&running_mutex);	
-	
+
 	char * path = (char *) arguments;
 
-
-	fprintf(stdout,"%s\n",  path);
-	
-	/*
-	pthread_mutex_lock(&running_mutex);
-
-
-	//printf("%s\n", args->fpath);
-    if( args->tflag == FTW_F && isCSV(args->fpath)){
-		fprintf(stdout,"%s \n", args->fpath);
-	
+	if( isCSV(path)){
+		fprintf(stdout, "%s \n" , path);
 	}
-*/
-//	pthread_mutex_unlock(&running_mutex);
-//	running_threads--;
+	
+	free(path);
 //	pthread_mutex_unlock(&running_mutex);
 
 }
@@ -107,7 +84,7 @@ display_info_threaded(const char *fpath, const struct stat *sb,
 	
 //	pthread_mutex_unlock(&running_mutex);
 	//pthread_mutex_lock(&running_mutex);
-	pthread_create(&threads[i++], NULL, &display_info2,(void *) copy_of_path);
+	pthread_create(&threads[index_threads++], NULL, &display_info2,(void *) copy_of_path);
 	//pthread_mutex_unlock(&running_mutex);
 
 	//	fprintf(stdout,"%d \n" , &threads[i]);
@@ -129,32 +106,113 @@ count_files(const char *fpath, const struct stat *sb,
 int
 main(int argc, char *argv[])
 {
+	char * in_dir = malloc(1000);
+	char * outdir_global = malloc(1000);
+	char * type_global  = malloc(1000);
+	
+	strcpy(in_dir, "./\0");
+	strcpy(outdir_global, "./\0");
+	
+
+	if(argc != 3 && argc != 5 && argc != 7){
+		fprintf(stderr, "<ERROR> : Incorrect number of arguments, for more information , please use  $ ./sorter -h \n");
+		return 0;
+	}
+
+	short type_found = 0;
+
+	int i;
+	for(i = 1; i < argc; i++){
+		
+		//printf("%s\n", argv[i]);
+		if(strcmp(argv[i],"-c") == 0){
+			if((i % 2) == 0){
+				fprintf(stderr, "<ERROR> : Incorrect format, for more information , please use  $ ./sorter -h \n");
+				return 0;
+			}
+			strcpy(type_global, argv[i+1]);
+			type_found = 1;
+		}
+
+		if(strcmp(argv[i], "-d") == 0){
+			if((i % 2) == 0){
+				fprintf(stderr, "<ERROR> : Incorrect format, for more information , please use  $ ./sorter -h \n");
+				return 0;
+			}
+
+			strcpy(in_dir, argv[i+1]);
+		}
+
+		if(strcmp(argv[i], "-o") == 0){
+			if((i % 2) == 0){
+				fprintf(stderr, "<ERROR> : Incorrect format, for more information , please use  $ ./sorter -h \n");
+				return 0;
+			}
+
+			strcpy(outdir_global, argv[i+1]);
+		}
+	}
+
+	
+	FILE *file;
+	file = fopen(in_dir, "r");
+
+	if (file == NULL){
+		fprintf(stderr, "<ERROR> : Input directory not found or can't be accessed. \n");
+		free(type_global);
+		free(outdir_global);
+		free(in_dir);
+		return 0;
+	}
+	
+	fclose(file);
+	file = fopen(outdir_global, "r");
+
+	if (file == NULL){
+		fprintf(stderr, "<ERROR> : Output directory not found or can't be accessed. \n");
+		free(type_global);
+		free(outdir_global);
+		free(in_dir);
+		return 0;	
+	}
+
+	fclose(file);
+					
+	printf("type %s: in_dir: %s, outdir: %s \n", type_global, in_dir, outdir_global);
+	
+
+	if (type_found == 0){
+		fprintf(stderr, "<ERROR> : Incorrect format expected a -c flag: \n For more information , please use  $ ./sorter -h \n");
+		free(type_global);
+		free(outdir_global);
+		free(in_dir);
+		return 0;
+	}
+
+	
 	int flags = 0;
 	pthread_mutex_init(&running_mutex, NULL);
-	int x = nftw((argc < 2) ? "." : argv[1], count_files, 20, flags);
+	int x = nftw(in_dir, count_files, 20, flags);
     
 	//fprintf(stdout, "num %d: \n" , numoffiles);
 	numoffiles++;
 	threads = malloc(sizeof(pthread_t) * numoffiles);
 
-	filenames = malloc(sizeof(char *) * numoffiles);
-	//flags = malloc(sizeof(int) * numoffiles);
 
 	if(threads == NULL){
 		fprintf(stdout,"Too many expected threads, out of memory");
 	}
 
 	//printf("start1\n");
-   	if (nftw((argc < 2) ? "." : argv[1], display_info_threaded, 20, flags) == -1) {
+   	if (nftw(in_dir, display_info_threaded, 20, flags) == -1) {
         perror("nftw");
         exit(EXIT_FAILURE);
     }
 
-   printf("\n"); //cause of zsh
   		
-	for( i = 1; i <  numoffiles; i++){
+	for( index_threads = 0; index_threads <  numoffiles; index_threads++){
 //		fprintf(stdout, "%d \n" , &threads[i]);
-		pthread_join(threads[i], NULL);	
+		pthread_join(threads[index_threads], NULL);	
 	}
 	pthread_mutex_destroy(&running_mutex);
 /*   while (running_threads > 0){
@@ -163,5 +221,6 @@ main(int argc, char *argv[])
    }
 
    */
-   exit(EXIT_SUCCESS);
+  	printf("\n"); 
+	exit(EXIT_SUCCESS);
 }
