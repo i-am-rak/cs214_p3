@@ -1,4 +1,3 @@
-#define _XOPEN_SOURCE 500
 #include <ftw.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +15,7 @@ static char * outdir_global;
 static char * type_global ;
 
 
-struct arg_struct {
+struct arg_struct {  //Struct to allow for multiple arguments in threads
 
 	char * file_path;
 	char * out_dir;
@@ -24,8 +23,7 @@ struct arg_struct {
 
 } args;
 
-int isCSV(const char* name)
-{
+int isCSV(const char* name) { //Check if the file is a csv
 	char* temp=strdup(name);
 	char* ext=strrchr(temp,'.');
 	if(ext!=NULL&&strcmp(ext,".csv")==0)
@@ -38,88 +36,62 @@ int isCSV(const char* name)
 } 
 
 
-void 
-
-file_test(char * filename, char * out_dir, char * sort_type){
-
-	//printf(test);
-	pthread_mutex_lock(&running_mutex);
+void file_test(char * filename, char * out_dir, char * sort_type) { //Test mutex locks using file output
 
 	char * out_filename = malloc(100);
 	
-	//fprintf(stderr, "%s/AllFiles-sorted-%s.csv", out_dir, sort_type);
 	sprintf(out_filename, "%s/AllFiles-sorted-%s.csv", out_dir, sort_type);
+
+	pthread_mutex_lock(&running_mutex);
 
 	FILE * pFile;
 	pFile = fopen (out_filename,"a");
 	
-	//fprintf(stderr, "file pointer : %d\n", pFile);
 	if (pFile!=NULL){
 		fprintf(pFile,"\n%s",filename);
 		fclose (pFile);
 	}
-
-	free(out_filename);
-
 	pthread_mutex_unlock(&running_mutex);
-
-
+	
+	free(out_filename);
+	free(filename);
+	free(out_dir);
+	free(sort_type);
 }
 
 
-void
-* display_info2(void * arguments)
-{
+void * display_info2(void * arguments) { //Test out if thread works by printing out the csv file name
 
-	//char * path = (char *) arguments;
 	struct arg_struct *args = (struct arg_struct *)arguments;
 
 	if( isCSV(args->file_path)){
 		fprintf(stdout, "%s \n" , args->file_path);
 		file_test(args->file_path, args->out_dir, args->sort_type);
 	}
-	
-	//free(path);
-//	pthread_mutex_unlock(&running_mutex);
 
 }
 
 
-int
-display_info_threaded(const char *fpath, const struct stat *sb,
-             int tflag, struct FTW *ftwbuf)
-{
-		
-	//printf("testing\n");
-	struct arg_struct * args2 = malloc( sizeof(args2));
-	//printf("test3: %s , %s , %s \n" , fpath, outdir_global, type_global);
-	args2->file_path = strdup(fpath);
-	//strcpy(args2->file_path, fpath);
-	args2->out_dir = strdup(outdir_global);
-	//strcpy(args2->out_dir, outdir_global);
-	args2->sort_type = strdup(type_global);
-	//strcpy(args2->sort_type, type_global);
+int display_info_threaded(const char *fpath, const struct stat *sb, int tflag) { //Function to be run by nftw
 
-	//char * copy_of_path = strdup(fpath);
-	//printf("testing malloc done\n");	
+	struct arg_struct * args2 = malloc( sizeof(args2));
+	args2->file_path = strdup(fpath);
+	args2->out_dir = strdup(outdir_global);
+	args2->sort_type = strdup(type_global);
+
 	pthread_create(&threads[index_threads++], NULL, &display_info2,(void *) args2);
 	return 0;
 }
 
 
-int
-count_files(const char *fpath, const struct stat *sb,
-             int tflag, struct FTW *ftwbuf)
-{
+int count_files(const char *fpath, const struct stat *sb, int tflag) { //Check how many files there are to malloc
 
 	++numoffiles;
 	return 0;
 }
 
 	
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	
 	pthread_mutex_init(&running_mutex, NULL);
 	char * in_dir = malloc(1000);
@@ -140,7 +112,6 @@ main(int argc, char *argv[])
 	int i;
 	for(i = 1; i < argc; i++){
 		
-		//printf("%s\n", argv[i]);
 		if(strcmp(argv[i],"-c") == 0){
 			if((i % 2) == 0){
 				fprintf(stderr, "<ERROR> : Incorrect format, for more information , please use  $ ./sorter -h \n");
@@ -177,7 +148,7 @@ main(int argc, char *argv[])
 	pFile = fopen (out_filename,"w");
 	
 	if (pFile!=NULL){
-		fputs ("test",pFile);
+		fputs ("column1, column2 ",pFile);
 		fclose (pFile);
 	}
 
@@ -207,8 +178,6 @@ main(int argc, char *argv[])
 
 	fclose(file);
 					
-	//printf("type : %s \nin_dir : %s \noutdir : %s \n\n", type_global, in_dir, outdir_global);
-	
 
 	if (type_found == 0){
 		fprintf(stderr, "<ERROR> : Incorrect format expected a -c flag: \n For more information , please use  $ ./sorter -h \n");
@@ -217,41 +186,37 @@ main(int argc, char *argv[])
 		free(in_dir);
 		return 0;
 	}
-
 	
-	int flags = 0;
-	int x = nftw(in_dir, count_files, 20, flags);
+	int x = ftw(in_dir, count_files, 0);
     
-	//fprintf(stdout, "num %d: \n" , numoffiles);
 	numoffiles++;
 	threads = malloc(sizeof(pthread_t) * numoffiles);
 
 
 	if(threads == NULL){
-		fprintf(stdout,"Too many expected threads, out of memory");
+		fprintf(stderr,"<ERROR> : Too many expected threads, out of memory");
 	}
 
-	printf("type : %s \nin_dir : %s \noutdir : %s \n\n", type_global, in_dir, outdir_global);
-	
+	printf("type : %s \nin_dir : %s \noutdir : %s \n\n", type_global, in_dir, outdir_global);	
 
-	//printf("start1\n");
-   	if (nftw(in_dir, display_info_threaded, 20, flags) == -1) {
-        perror("nftw");
-        exit(EXIT_FAILURE);
+   	if (ftw(in_dir, display_info_threaded, 0) == -1) {
+        fprintf(stderr, "<ERROR> : Error occured during the file tree walk");
+		free(type_global);
+		free(outdir_global);
+		free(in_dir);
+		exit(EXIT_FAILURE);
     }
-
   		
-	for( index_threads = 0; index_threads <  numoffiles; index_threads++){
-//		fprintf(stdout, "%d \n" , &threads[i]);
+	for( index_threads = 0; index_threads <  numoffiles; index_threads++) {	
 		pthread_join(threads[index_threads], NULL);	
 	}
+	
 	pthread_mutex_destroy(&running_mutex);
-/*   while (running_threads > 0){
-		sleep(5);
 
-   }
-
-   */
-  	printf("\n"); 
+  	printf("\n"); //extra new line for space 
+	
+	free(type_global);
+	free(outdir_global);
+	free(in_dir);
 	exit(EXIT_SUCCESS);
 }
