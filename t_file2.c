@@ -19,6 +19,7 @@ static char * type_global ;
 char dataType;
 CSVRow* allFiles;
 int arrCounter=0;
+char* header;
 
 struct arg_struct {  //Struct to allow for multiple arguments in threads
 
@@ -440,8 +441,9 @@ void file_test(char* filename1, char* outdir,char* token) //the meat of joeStuff
 	//sort them first??
 	//callMe(file_count,type,movies,help);
 	
+	header=strdup(movies[0].string_row);
 	//WRITE MOVIES INTO GLOBAL ARRAY
-	for(i=0;i<file_count;i++)
+	for(i=1;i<file_count;i++)
 	{
 		pthread_mutex_lock(&mrg);
 		int spot=arrCounter++;
@@ -629,18 +631,14 @@ int main(int argc, char *argv[]) {
 	}
 	printf("bef\n");
   	FILE* finalOut=fopen(out_filename,"w");		
-	fprintf(finalOut,"%s",allFiles[0].string_row);
-	char* header=strdup(allFiles[0].string_row);
+	fprintf(finalOut,"%s",header);
 	callMe(arrCounter,dataType,allFiles,help);
 	printf("aft\n");
 	for(i=1;i<arrCounter;i++)
 	{
 		printf(">%d ",i);
 		fflush(stdout);
-		if(strcmp(header,allFiles[i].string_row)!=0)
-		{
-			fprintf(finalOut,"%s",allFiles[i].string_row);
-		}
+		fprintf(finalOut,"%s",allFiles[i].string_row);
 	//	free(allFiles[i].data);
 	//	free(allFiles[i].string_row);
 	}
