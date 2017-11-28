@@ -17,7 +17,7 @@ static char * outdir_global;
 static char * type_global ;
 
 char dataType;
-CSVRow allFiles[5000];
+CSVRow* allFiles;
 int arrCounter=0;
 
 struct arg_struct {  //Struct to allow for multiple arguments in threads
@@ -227,7 +227,7 @@ int isCSV(const char* name) { //Check if the file is a csv
 } 
 
 
-void file_test(char* filename1, char* token, char* outdir) //the meat of joeStuff.c (missing main() stuff)
+void file_test(char* filename1, char* outdir,char* token) //the meat of joeStuff.c (missing main() stuff)
 {
 	FILE* fp = fopen(filename1, "r");
 	int file_count = 0;
@@ -502,6 +502,7 @@ int count_files(const char *fpath, const struct stat *sb, int tflag) { //Check h
 	
 int main(int argc, char *argv[]) {
 	
+	allFiles=malloc(sizeof(CSVRow*)*5000);
 	pthread_mutex_init(&running_mutex, NULL);
 	char * in_dir = malloc(1000);
 	outdir_global = malloc(1000);
@@ -561,7 +562,6 @@ int main(int argc, char *argv[]) {
 		fclose (pFile);
 	}
 
-	free(out_filename);
 	
 	FILE *file;
 	file = fopen(in_dir, "r");
@@ -619,14 +619,24 @@ int main(int argc, char *argv[]) {
 		pthread_join(threads[index_threads], NULL);	
 	}
 	
-	CSVRow* help;
-	memcpy(&help,&allFiles,arrCounter);
-	callMe(arrCounter,dataType,allFiles,help);
-
-  	FILE* finalOut=fopen(outdir_global,"w");		
+	printf("before my added stuff in main()\n");
+	fflush(stdout);
+	CSVRow* help=malloc(sizeof(CSVRow*)*5000);
+	for(i=0;i<5000;i++)
+	{
+		printf("%d\n",i);
+		help[i].data=malloc(1000);
+		help[i].string_row=malloc(1000);
+	}
+	printf("bef\n");
+	//callMe(arrCounter,dataType,allFiles,help);
+	printf("aft\n");
+  	FILE* finalOut=fopen(out_filename,"w");		
 	fprintf(finalOut,"%s",allFiles[0].string_row);
 	for(i=1;i<arrCounter;i++)
 	{
+		printf(">%d ",i);
+		fflush(stdout);
 		if(strcmp(allFiles[0].string_row,allFiles[i].string_row)!=0)
 		{
 			fprintf(finalOut,"%s",allFiles[i].string_row);
@@ -640,5 +650,6 @@ int main(int argc, char *argv[]) {
 	free(type_global);
 	free(outdir_global);
 	free(in_dir);
+	free(out_filename);
 	exit(EXIT_SUCCESS);
 }
