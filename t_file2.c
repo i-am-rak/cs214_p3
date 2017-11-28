@@ -624,25 +624,25 @@ int main(int argc, char *argv[]) {
 	CSVRow* help=malloc(sizeof(CSVRow*)*5000);
 	for(i=0;i<5000;i++)
 	{
-		printf("%d\n",i);
 		help[i].data=malloc(1000);
 		help[i].string_row=malloc(1000);
 	}
 	printf("bef\n");
-	//callMe(arrCounter,dataType,allFiles,help);
-	printf("aft\n");
   	FILE* finalOut=fopen(out_filename,"w");		
 	fprintf(finalOut,"%s",allFiles[0].string_row);
+	char* header=strdup(allFiles[0].string_row);
+	callMe(arrCounter,dataType,allFiles,help);
+	printf("aft\n");
 	for(i=1;i<arrCounter;i++)
 	{
 		printf(">%d ",i);
 		fflush(stdout);
-		if(strcmp(allFiles[0].string_row,allFiles[i].string_row)!=0)
+		if(strcmp(header,allFiles[i].string_row)!=0)
 		{
 			fprintf(finalOut,"%s",allFiles[i].string_row);
 		}
-		free(allFiles[i].data);
-		free(allFiles[i].string_row);
+	//	free(allFiles[i].data);
+	//	free(allFiles[i].string_row);
 	}
 	pthread_mutex_destroy(&running_mutex);
   	printf("\n"); //extra new line for space 
