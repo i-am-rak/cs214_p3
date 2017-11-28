@@ -16,14 +16,12 @@ typedef struct params
 	char* outDir;
 }params;
 
-pthread_mutex_t m;
 pthread_mutex_t mrg;
 pthread_t* allIDs;
 CSVRow allFiles[5000];
 char dataType;
 int arrCounter=0;
 int idCounter=0;
-FILE* out;
 
 int isCSV(char* name)
 {
@@ -38,8 +36,8 @@ int isCSV(char* name)
 	return 0;
 }
 
-void sortCSVFile(char * filename1,char * token, char * outdir){
-	
+void sortCSVFile(char * filename1,char * token, char * outdir)
+{
 	FILE* fp = fopen(filename1, "r");
 	int file_count = 0;
 	char c = 0;
@@ -140,11 +138,11 @@ void sortCSVFile(char * filename1,char * token, char * outdir){
 				}
 				if(char_found == 0)
 				{
+					//field not found
 					free(check_token);
 					free(movies);
 					free(token);
 					free(str_file);
-
 					return;
 				}
 				strcpy(movies[count].data, token);
@@ -269,117 +267,18 @@ void sortCSVFile(char * filename1,char * token, char * outdir){
 		free(movies[j].string_row);
 		free(help[j].string_row);
 	}
+
 	free(check_token);
 	free(movies);
 	free(help);
-	free(token);
+	//free(token);
 	free(str_file);
-
-	return;
-
-/*
-	char * filename = malloc(1000);
-	
-	char * tempp = malloc(1000);
-	strncpy(tempp,filename1,strlen(filename1)-4);
-	tempp[strlen(filename1)-4] = '\0';
-	sprintf(filename, "%s/%s-sorted-%s.csv",outdir,tempp,token);
-	FILE* file_ptr = fopen(filename, "w");
-	for(j = 0; j < file_count; j++)
-	{
-		fprintf(file_ptr, "%s", movies[j].string_row);
-	}
-	fclose(file_ptr);
-	free(filename);
-	free(tempp);
-	
-
-	for(j = 0; j < file_count; j++)
-	{
-		free(movies[j].data);
-		free(help[j].data);
-		//movies[j].point = j;
-		free(movies[j].string_row);
-		free(help[j].string_row);
-	}
-
-*/
-}
-
-/*
-void* file(void* ps)	//give to thread if on file (to sort)
-{
-	params* ps2=(params*)ps;
-	printf("%s\n",ps2->path);
-//	sortCSVFile(ps2->path,ps2->field,ps2->outDir);
-}
-  
-void* folder(void* ds)  
-{  
-	params* ds2=(params*)ds;
-	char* dir=ds2->path;
-	DIR* dp;  
-	struct dirent* entry;  
-	struct stat statbuf;  
-	//chdir("./");
-	if((dp=opendir(dir))==NULL)
-	{  
-		return "";
-    	}  
-    	//chdir(dir);  
-	entry=readdir(dp);
-	while((entry=readdir(dp))!=NULL)
-	{
-        	lstat(entry->d_name,&statbuf);  
-		if(entry==NULL)
-		{
-			return "";
-		}
-        	else if(S_ISDIR(statbuf.st_mode))
-		{  
-        	    	if(strcmp(entry->d_name, ".") == 0||strcmp(entry->d_name, "..") == 0)
-        	       	{
-				continue;
-			}
-			params* new=malloc(sizeof(params*));
-			new->field=strdup(ds2->field);
-			
-			
-			new->path=strdup(ds2->path);
-			strcat(new->path,entry->d_name);
-			strcat(new->path,"/");
-
-
-			new->outDir=strdup(ds2->outDir);
-			pthread_mutex_lock(&m);
-			pthread_t id=idCounter++;
-			pthread_mutex_unlock(&m);
-			pthread_create(&allIDs[id], NULL, folder, (void*)new);
-       		} 
-		else if(isCSV(entry->d_name)) 
-		{
-			params* new=malloc(sizeof(params*));
-			new->field=strdup(ds2->field);
-			new->path=strdup(ds2->path);
-			strcat(new->path,entry->d_name);
-			new->outDir=strdup(ds2->outDir);
-			pthread_mutex_lock(&m);
-			pthread_t id=idCounter++;
-			pthread_mutex_unlock(&m);
-			pthread_create(&allIDs[id],NULL, file,(void*)new);
-		}
-	}
-	return "";
-}  
-
-void callMe(int size,char type,CSVRow* arr, CSVRow* b)
-{
 	return;
 }
-*/
+
 int main(int argc, char* argv[])  
 { 
-	out=fopen("final.csv","w");
+	FILE* out=fopen("final.csv","w");
 /*
 	allIDs=malloc(10000);
 	char *topdir=malloc(1000);  
@@ -404,17 +303,23 @@ int main(int argc, char* argv[])
 */
 	CSVRow* help; 
 	memcpy(&help,&allFiles,arrCounter);
-	printf("(%d)\n",idCounter-1);
 	//callMe(arrCounter,dataType,allFiles,help);
-
-	for(i=0;i<arrCounter;i++)
+	sortCSVFile("./dataset1.csv","color","./");
+	sortCSVFile("./dataset2.csv","color","./");
+	int i;
+	fprintf(out,"%s",allFiles[0].string_row);
+	for(i=1;i<arrCounter;i++)
 	{
+		if(strcmp(allFiles[i].string_row,allFiles[0].string_row)!=0)
+		{
+			fprintf(out,"%s",allFiles[i].string_row);
+		}
 		free(allFiles[i].data);
-		free(help[i].data);
 		free(allFiles[i].string_row);
-		free(help[i].string_row);
 	}
-	free(topdir);
+	free(allFiles[0].data);
+	free(allFiles[0].string_row);
 	fclose(out);
+	pthread_mutex_destroy(&mrg);
     	return 0; 
 } 
