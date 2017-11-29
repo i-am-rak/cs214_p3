@@ -36,7 +36,7 @@ void mergeStr(CSVRow* arr,CSVRow* help, int lptr,int rptr,int llimit,int rlimit,
         	    strcpy(help[k].string_row,arr[i].string_row);
         	    k++;
         	    i++;
-		}
+	 	}
         	else
 		{
         	    strcpy(help[k].data,arr[j].data);
@@ -218,7 +218,7 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 	char * str_file = malloc(10);
 	int row_position = 0;
 	int j;
-	//fprintf(stdout, "%s\n", token);		
+	//fpirintf(stdout, "%s\n", token);		
 	//printf("a1\n");
 
 	c = fgetc(fp);
@@ -524,8 +524,9 @@ void * display_info2(void * arguments) { //Test out if thread works by printing 
 
 	struct arg_struct *args = (struct arg_struct *)arguments;
 
+	//printf("--%d\n",pthread_self());
 	if( isCSV(args->file_path)){
-		fprintf(stdout, "%s \n" , args->file_path);
+		//fprintf(stdout, "%s \n" , args->file_path);
 		file_test(args->file_path, args->out_dir, args->sort_type);
 	}
 
@@ -540,7 +541,6 @@ int display_info_threaded(const char *fpath, const struct stat *sb, int tflag) {
 	args2->sort_type = strdup(type_global);
     
     pthread_mutex_lock(&running_mutex);
-
 	pthread_create(&threads[index_threads++], NULL, &display_info2,(void *) args2);
 	//printf("%d \n", &threads[index_threads]);
 
@@ -666,7 +666,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr,"<ERROR> : Too many expected threads, out of memory");
 	}
 
-	printf("type : %s \nin_dir : %s \noutdir : %s \n\n", type_global, in_dir, outdir_global);	//testing print
+	//printf("type : %s \nin_dir : %s \noutdir : %s \n\n", type_global, in_dir, outdir_global);	//testing print
 
    	if (ftw(in_dir, display_info_threaded, 0) == -1) {
         fprintf(stderr, "<ERROR> : Error occured during the file tree walk");
@@ -677,14 +677,14 @@ int main(int argc, char *argv[]) {
     }
 
     //printf("kika\n");  
-
+	printf("Main PID: %d\n",getpid());
     int lolo = 0;
+	printf("All TIDS: ");
 	for(lolo = 0; lolo <  numoffiles - 1; lolo++) {	
 	    //printf("k\n");	
-         
         pthread_join(threads[lolo], NULL);	
+        printf("%u, ",threads[lolo]); 
 	}
-
 	//printf("kom\n");
     
     CSVRow * final_all_files = malloc(sizeof(CSVRow) * largest_file_count * numoffiles);
