@@ -374,10 +374,10 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 							break;
 						}
 						else if(comma_number == comma_position_max){
-							strncpy(movies[count].data, movies[count].string_row+p1,index-p1);
-							//fprintf(stdout, "[%s] , [%s]\n", check_token, token);
+							strncpy(movies[count].data, movies[count].string_row+p1+1,index-p1-2);
+							//fprintf(stdout, "[%s] , [%s]\n", check_token, token1);
 							//movies[count].data[index-p1] = '\0';
-							//fprintf(stdout, "%d: %s\n",count, movies[count].data);	
+							//fprintf(stdout, "[%d]: [%s]\n",count, movies[count].data);	
 							trim(movies[count].data);
 								break;
 						}
