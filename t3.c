@@ -215,26 +215,53 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 	int file_count = 0;
 	char c = 0;
 	int i = 0;
-	char * str_file = malloc(10);
+	//char * str_file;
 	int row_position = 0;
 	int j;
 	//fpirintf(stdout, "%s\n", token);		
 	//printf("a1\n");
 
-	c = fgetc(fp);
+	c = getc(fp);
+	
 	while (c != EOF) {
 		//printf("%c\n",c);
-		str_file = realloc(str_file, (i+1) * sizeof(char));	
-		str_file[i] = c;
+		//str_file = realloc(str_file, (i+1) * sizeof(char));	
+		//str_file[i] = c;
 		if(c == '\n'){
 			file_count++;
 		}
 		i++;
-		c = fgetc(fp);
+		c = getc(fp);
     }
-        
+
+
 	fclose(fp);
 	
+
+	char * str_file = malloc(sizeof(char) * (i + 1));
+	//printf("helpp\n");
+	//fflush(stdout);
+	FILE * fp1 = fopen(filename1, "r");
+	if(fp1 == NULL){
+		//printf("ERORO");
+	}
+	c = getc(fp1);
+	
+	i=0;
+	while (c != EOF) {
+		//printf("%c\n",c);
+		//str_file = realloc(str_file, (i+1) * sizeof(char));	
+		str_file[i] = c;
+		//if(c == '\n'){
+		//	file_count++;
+		//}
+		i++;
+		c = getc(fp1);
+    }
+    
+	fclose(fp1);	
+
+	free(filename1);
 	str_file[i] = '\0';
 	
 	pthread_mutex_lock(&running_mutex);
@@ -304,7 +331,7 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 						else{
 							strncpy(check_token, movies[count].string_row+p1,index-p1);
 							check_token[index-p1] =  '\0';
-							//fprintf(stdout, "[%s] , [%s]\n", check_token, token);
+							//fprintf(stdout, "[%s] , [%s]\n", check_token, token1);
 						}
 						if(strcmp(check_token,token1) == 0){
 							char_found = 1;
@@ -320,7 +347,7 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 					//printf("%d\n %c",char_found, c);
 				}
 				if(char_found == 0){
-					//fprintf(stderr, "ERROR: <Selected item was not found in parameters>\n");
+					fprintf(stderr, "ERROR: <Selected item was not found in parameters>\n");
 					
 					free(check_token);
 					free(movies);
@@ -460,8 +487,8 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 
 	}
 	
-*/
-	free(out_filename);
+*/	
+	//free(out_filename);
 //	fclose(pFile);	
 	
 	//printf("a6\n");
