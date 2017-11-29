@@ -205,7 +205,10 @@ void trim(char* str)
 	}
 	t[j]='\0';
 	strcpy(str,t);
-	free(t);
+	
+	if(t != NULL) {
+		free(t);
+	}
 }
 
 
@@ -258,10 +261,16 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 		i++;
 		c = getc(fp1);
     }
-    
+   
+	if(fp1 != NULL)
+	{
 	fclose(fp1);	
+	}
+	if(filename1 != NULL){
 
 	free(filename1);
+	}	
+	
 	str_file[i] = '\0';
 	
 	pthread_mutex_lock(&running_mutex);
@@ -347,12 +356,12 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 					//printf("%d\n %c",char_found, c);
 				}
 				if(char_found == 0){
-					fprintf(stderr, "ERROR: <Selected item was not found in parameters>\n");
+					//fprintf(stderr, "ERROR: <Selected item was not found in parameters>\n");
 					
-					free(check_token);
-					free(movies);
-					free(token1);
-					free(str_file);
+					//free(check_token);
+					//free(movies);
+					//free(token1);
+					//free(str_file);
 			
 					return;
 				}
@@ -488,25 +497,40 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 	}
 	
 */	
-	//free(out_filename);
+	if(out_filename !=NULL){
+
+		free(out_filename);
+	
+	}
+	//	
 //	fclose(pFile);	
 	
 	//printf("a6\n");
 	for(j = 0; j < file_count; j++){
 		//free(movies[j].data);
-		free(help[j].data);
+		if(help[j].data != NULL)
+			free(help[j].data);
 		//movies[j].point = j;
 		//free(movies[j].string_row);
-		free(help[j].string_row);
+		if(help[j].string_row != NULL)
+			free(help[j].string_row);
 	}
 
 	//printf("a7\n");
-	free(check_token);
+	if(check_token != NULL)
+		free(check_token);
 	//free(movies);
-	free(help);
-	free(token1);
-	free(outdir1);
-	free(str_file);
+	if(help!=NULL)
+		free(help);
+	
+	if(token1 != NULL)
+		free(token1);
+	
+	if(outdir1 != NULL)
+		free(outdir1);
+	
+	if(str_file !=NULL)
+		free(str_file);
 	
 	return;
 } 
@@ -525,10 +549,13 @@ int isCSV(const char* name) { //Check if the file is a csv
 	char* ext=strrchr(temp,'.');
 	if(ext!=NULL&&strcmp(ext,".csv")==0)
 	{
-		free(temp);
+		if(temp != NULL)
+			free(temp);
 		return 1;
 	}
-	free(temp);
+	
+	if(temp != NULL)
+		free(temp);
 	return 0;
 } 
 
@@ -537,7 +564,7 @@ void file_test(char * filename, char * out_dir, char * sort_type) { //Test mutex
 
 	
 	sortCSVFile(filename ,sort_type , out_dir);
-    printf("hia\n");
+    //printf("hia\n");
 	
 	//free(test_string);
 	//free(out_filename);
@@ -707,6 +734,7 @@ int main(int argc, char *argv[]) {
 	printf("Main PID: %d\n",getpid());
     int lolo = 0;
 	printf("All TIDS: ");
+	
 	for(lolo = 0; lolo <  numoffiles - 1; lolo++) {	
 	    //printf("k\n");	
         pthread_join(threads[lolo], NULL);	
@@ -767,7 +795,10 @@ int main(int argc, char *argv[]) {
 		fclose(pFile);
 	}
 	
+	if(out_filename != NULL){
+
 	free(out_filename);
+	}
 
 	pthread_mutex_destroy(&running_mutex);
 
