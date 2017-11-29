@@ -621,7 +621,12 @@ int main(int argc, char *argv[]) {
 	
 	strcpy(in_dir, "./\0");
 	strcpy(outdir_global, "./\0");
-	
+
+	if(argc == 2 && strcmp(argv[1], "-h") == 0){
+		fprintf(stderr, "Expected output to be $./sorter -c [item] -d [input_directory] -o [output directory]\nInput and Output directory are not required, and use the directory where the program was run default\n ");
+
+		exit(EXIT_FAILURE);
+	}
 
 	if(argc != 3 && argc != 5 && argc != 7){
 		fprintf(stderr, "<ERROR> : Incorrect number of arguments, for more information , please use  $ ./sorter -h \n");
