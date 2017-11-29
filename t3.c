@@ -17,6 +17,10 @@ static char * outdir_global;
 static char * type_global ;
 
 CSVFile * all_files;
+int index_files = 0;
+int largest_file_count = 0;
+short data_type = 0;
+
 
 void mergeStr(CSVRow* arr,CSVRow* help, int lptr,int rptr,int llimit,int rlimit,int num)
 {
@@ -233,12 +237,18 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 	
 	str_file[i] = '\0';
 	
-	
+	pthread_mutex_lock(&running_mutex);
+
+	if(file_count > largest_file_count){
+		largest_file_count = file_count;
+	}
+	pthread_mutex_unlock(&running_mutex);
+
 	CSVRow *movies = malloc(file_count * sizeof(CSVRow));
 	//token = strtok(str_file, "\n");
 	
 	for(j = 0; j < file_count; j++){
-		movies[j].data = malloc(10000);
+		movies[j].data = malloc(1000);
 		movies[j].point = j;
 		movies[j].string_row = malloc(10000);
 	}
@@ -246,7 +256,7 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 	CSVRow* help=malloc(sizeof(CSVRow)*file_count*2);    //array used for merging
     for(j =0;j<file_count;j++)
     {
-	help[j].data=malloc(10000);
+	help[j].data=malloc(1000);
 	help[j].point=j;
 	help[j].string_row=malloc(10000);
     }
@@ -310,7 +320,7 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 					//printf("%d\n %c",char_found, c);
 				}
 				if(char_found == 0){
-					fprintf(stderr, "ERROR: <Selected item was not found in parameters>\n");
+					//fprintf(stderr, "ERROR: <Selected item was not found in parameters>\n");
 					
 					free(check_token);
 					free(movies);
@@ -417,21 +427,13 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 		for(k = 0; movies[j].data[k] != '\0'; k++){
 			if(!(isdigit(movies[j].data[k]))){
 				if(movies[j].data[k] != '.' || movies[j].data[k] != '-'){
-					type = 's';	
+					type = 's';
+					data_type = 1;
 				}
 			}
 		}
 	}
-	//printf("%d \n", type);
-	//mergesort(movies,1,file_count-1,file_count);
 	callMe(file_count,type,movies,help);
-	//printf("heyo\n");
-	//printf("\n");
-	//char * filename = malloc(1000);
-	
-	//char * tempp = malloc(1000);
-	
-	//printf("a4\n");
 	
 	char * out_filename = malloc(100);
 
@@ -439,6 +441,11 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 
 	pthread_mutex_lock(&running_mutex);
 
+	all_files[index_files].row = movies;
+	index_files++;
+
+	pthread_mutex_unlock(&running_mutex);
+	/*
 	FILE * pFile = fopen (out_filename,"a");
 	
 	if (pFile!=NULL){
@@ -448,30 +455,26 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 		for(j = 1; j < file_count; j++){
 			fprintf(pFile, "%s", movies[j].string_row);
 		}
-		fprintf(pFile, "\b");
-	
+		fprintf(pFile, "\b");	
 
 	}
 	
-	pthread_mutex_unlock(&running_mutex);
-
+*/
 	free(out_filename);
-	fclose(pFile);
+//	fclose(pFile);	
 	
-	
-
 	//printf("a6\n");
 	for(j = 0; j < file_count; j++){
-		free(movies[j].data);
+		//free(movies[j].data);
 		free(help[j].data);
 		//movies[j].point = j;
-		free(movies[j].string_row);
+		//free(movies[j].string_row);
 		free(help[j].string_row);
 	}
 
 	//printf("a7\n");
 	free(check_token);
-	free(movies);
+	//free(movies);
 	free(help);
 	free(token1);
 	free(outdir1);
@@ -508,34 +511,6 @@ void file_test(char * filename, char * out_dir, char * sort_type) { //Test mutex
 	sortCSVFile(filename ,sort_type , out_dir);
 
 	
-	/*
-	char * out_filename = malloc(100);
-	
-	sprintf(out_filename, "%s/AllFiles-sorted-%s.csv", out_dir, sort_type);
-	
-	FILE * pFile = fopen(filename, "r");
-	
-	char * test_string = malloc(101);
-	if(pFile != NULL) {
-		fgets(test_string, 100, pFile);
-		fgets(test_string, 100, pFile);
-	}
-
-	
-
-	fclose(pFile);
-
-	pthread_mutex_lock(&running_mutex);
-
-	pFile = fopen (out_filename,"a");
-	
-	if (pFile!=NULL){
-		//fprintf(pFile,"\n%s",test_string);
-		fclose (pFile);
-	}
-	
-	pthread_mutex_unlock(&running_mutex);
-*/	
 	//free(test_string);
 	//free(out_filename);
 	//free(filename);
@@ -569,7 +544,7 @@ int display_info_threaded(const char *fpath, const struct stat *sb, int tflag) {
 
 
 int count_files(const char *fpath, const struct stat *sb, int tflag) { //Check how many files there are to malloc
-
+	printf("fpath : %s \n ", fpath);
 	++numoffiles;
 	return 0;
 }
@@ -637,7 +612,7 @@ int main(int argc, char *argv[]) {
 		fclose (pFile);
 	}
 
-	free(out_filename);
+
 	
 	FILE *file;
 	file = fopen(in_dir, "r");
@@ -691,11 +666,55 @@ int main(int argc, char *argv[]) {
 		free(in_dir);
 		exit(EXIT_FAILURE);
     }
-  		
+  	
+
 	for( index_threads = 0; index_threads <  numoffiles; index_threads++) {	
 		pthread_join(threads[index_threads], NULL);	
 	}
+
+	CSVRow * final_all_files = malloc(sizeof(CSVRow) * largest_file_count * numoffiles);
 	
+	CSVRow * all_temp = malloc(sizeof(CSVRow) * largest_file_count * numoffiles);
+	
+	int kap = 0;
+
+	for(kap = 0; kap < largest_file_count * numoffiles;kap++)
+    {
+		all_temp[kap].data=malloc(1000);
+		all_temp[kap].point=kap;
+		all_temp[kap].string_row=malloc(10000);
+    }
+
+
+	int xi;
+	int xj;
+	int dacount = 0;
+	printf("%d\n", numoffiles);
+	for(xi = 0; all_files[xi].row != NULL; xi++) {	
+		for(xj = 1; all_files[xi].row[xj].data != NULL;  xj++){
+			final_all_files[dacount] = all_files[xi].row[xj];	
+			dacount++;
+		}
+	}
+	
+	pFile = fopen (out_filename,"a");
+
+	callMe(largest_file_count,'s',final_all_files,all_temp);	
+
+	if (pFile!=NULL){
+	//fprintf(pFile,"\n%s",test_string);	
+		fprintf(pFile, "\n");
+		int j;
+		for(j = 0; final_all_files[j].data != NULL; j++){
+			//printf("%d\n", j);
+			fprintf(pFile, "%s", final_all_files[j].string_row);
+		}
+
+		fclose(pFile);
+	}
+	
+	free(out_filename);
+
 	pthread_mutex_destroy(&running_mutex);
 
   	printf("\n"); //extra new line for space 

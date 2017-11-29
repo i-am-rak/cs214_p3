@@ -12,7 +12,7 @@ typedef struct _CSVRow{
 } CSVRow;
 
 typedef struct _CSVFile{
-	CSVRow * CSVRow;
+	CSVRow * row;
 } CSVFile;
 
 //Suggestion: define a struct that mirrors a record (row) of the data set
