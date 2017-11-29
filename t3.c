@@ -19,7 +19,7 @@ static char * type_global ;
 CSVFile * all_files;
 int index_files = 0;
 int largest_file_count = 0;
-short data_type = 0;
+char data_type = 'c';
 
 
 void mergeStr(CSVRow* arr,CSVRow* help, int lptr,int rptr,int llimit,int rlimit,int num)
@@ -428,7 +428,7 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 			if(!(isdigit(movies[j].data[k]))){
 				if(movies[j].data[k] != '.' || movies[j].data[k] != '-'){
 					type = 's';
-					data_type = 1;
+					data_type = 's';
 				}
 			}
 		}
@@ -689,8 +689,13 @@ int main(int argc, char *argv[]) {
 	int xi;
 	int xj;
 	int dacount = 0;
-	//printf("%d\n", numoffiles);
-	for(xi = 0; all_files[xi].row != NULL; xi++) {	
+	//printf("%d\n", index_files);
+	//if(all_files[1].row == NULL){
+
+	//printf("k");
+	//}
+	for(xi = 0; xi < index_files; xi++) {	
+		printf("KK\n");	
 		for(xj = 1; all_files[xi].row[xj].data != NULL;  xj++){
 			final_all_files[dacount] = all_files[xi].row[xj];	
 			dacount++;
@@ -699,7 +704,7 @@ int main(int argc, char *argv[]) {
 	
 	pFile = fopen (out_filename,"a");
 
-	callMe(dacount,'s',final_all_files,all_temp);	
+	callMe(dacount,data_type,final_all_files,all_temp);	
 
 	if (pFile!=NULL){
 	//fprintf(pFile,"\n%s",test_string);	
