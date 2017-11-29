@@ -1,3 +1,4 @@
+#include "Sorter.h"
 #include <ftw.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +14,8 @@ pthread_t * threads;
 int index_threads = 0;
 static char * outdir_global;
 static char * type_global ;
+
+CSVFile all_files;
 
 
 struct arg_struct {  //Struct to allow for multiple arguments in threads
@@ -41,18 +44,31 @@ void file_test(char * filename, char * out_dir, char * sort_type) { //Test mutex
 	char * out_filename = malloc(100);
 	
 	sprintf(out_filename, "%s/AllFiles-sorted-%s.csv", out_dir, sort_type);
+	
+	FILE * pFile = fopen(filename, "r");
+/*	
+	char * test_string = malloc(101);
+	if(pFile != NULL) {
+		fgets(test_string, 100, pFile);
+		fgets(test_string, 100, pFile);
+	}
+*/
+
+
+	fclose(pFile);
 
 	pthread_mutex_lock(&running_mutex);
 
-	FILE * pFile;
 	pFile = fopen (out_filename,"a");
 	
 	if (pFile!=NULL){
-		fprintf(pFile,"\n%s",filename);
+		//fprintf(pFile,"\n%s",test_string);
 		fclose (pFile);
 	}
+	
 	pthread_mutex_unlock(&running_mutex);
 	
+	//free(test_string);
 	free(out_filename);
 	free(filename);
 	free(out_dir);
@@ -197,7 +213,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr,"<ERROR> : Too many expected threads, out of memory");
 	}
 
-	printf("type : %s \nin_dir : %s \noutdir : %s \n\n", type_global, in_dir, outdir_global);	
+	printf("type : %s \nin_dir : %s \noutdir : %s \n\n", type_global, in_dir, outdir_global);	//testing print
 
    	if (ftw(in_dir, display_info_threaded, 0) == -1) {
         fprintf(stderr, "<ERROR> : Error occured during the file tree walk");
