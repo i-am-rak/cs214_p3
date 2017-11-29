@@ -438,8 +438,8 @@ void file_test(char* filename1, char* outdir,char* token) //the meat of joeStuff
 		}
 	}
 
-	//sort them first??
-	//callMe(file_count,type,movies,help);
+	//sort local array first
+	callMe(file_count,dataType,movies,help);
 	
 	header=strdup(movies[0].string_row);
 	//WRITE MOVIES INTO GLOBAL ARRAY
@@ -504,7 +504,7 @@ int count_files(const char *fpath, const struct stat *sb, int tflag) { //Check h
 	
 int main(int argc, char *argv[]) {
 	
-	allFiles=malloc(sizeof(CSVRow*)*5000);
+	allFiles=malloc(sizeof(CSVRow*)*500);
 	pthread_mutex_init(&running_mutex, NULL);
 	char * in_dir = malloc(1000);
 	outdir_global = malloc(1000);
@@ -621,12 +621,12 @@ int main(int argc, char *argv[]) {
 		pthread_join(threads[index_threads], NULL);	
 	}
 	
-	printf("before my added stuff in main()\n");
+	printf("before my added stuff in main() %d\n",arrCounter);
 	fflush(stdout);
-	CSVRow* help=malloc(sizeof(CSVRow*)*5000);
-	for(i=0;i<5000;i++)
+	CSVRow* help=malloc(sizeof(CSVRow*)*500);
+	for(i=0;i<100;i++)
 	{
-		help[i].data=malloc(1000);
+		help[i].data=malloc(100);
 		help[i].string_row=malloc(1000);
 	}
 	printf("bef\n");
@@ -634,17 +634,17 @@ int main(int argc, char *argv[]) {
 	fprintf(finalOut,"%s",header);
 	callMe(arrCounter,dataType,allFiles,help);
 	printf("aft\n");
-	for(i=1;i<arrCounter;i++)
+	for(i=0;i<arrCounter;i++)
 	{
-		printf(">%d ",i);
+		printf(">%d: ",i);
 		fflush(stdout);
 		fprintf(finalOut,"%s",allFiles[i].string_row);
+		printf("%s\n\n",allFiles[i].string_row);
 	//	free(allFiles[i].data);
 	//	free(allFiles[i].string_row);
 	}
 	pthread_mutex_destroy(&running_mutex);
   	printf("\n"); //extra new line for space 
-	
 	free(type_global);
 	free(outdir_global);
 	free(in_dir);
