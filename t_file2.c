@@ -445,12 +445,18 @@ void file_test(char* filename1, char* outdir,char* token) //the meat of joeStuff
 	//WRITE MOVIES INTO GLOBAL ARRAY
 	for(i=1;i<file_count;i++)
 	{
+		printf("strcpy @ i=%d\n",i);
 		pthread_mutex_lock(&mrg);
 		int spot=arrCounter++;
 		pthread_mutex_unlock(&mrg);
+		strcpy(allFiles[spot].data,movies[i].data);
+		strcpy(allFiles[spot].string_row,movies[i].string_row);
+		allFiles[spot].point=movies[i].point;
+		/*
 		allFiles[spot].data=strdup(movies[i].data);
 		allFiles[spot].string_row=strdup(movies[i].string_row);
 		allFiles[spot].point=movies[i].point;
+		*/
 	}
 
 	for(j=0;j<file_count;j++)
@@ -504,7 +510,13 @@ int count_files(const char *fpath, const struct stat *sb, int tflag) { //Check h
 	
 int main(int argc, char *argv[]) {
 	
-	allFiles=malloc(sizeof(CSVRow*)*500);
+	allFiles=malloc(sizeof(CSVRow*)*1000);
+	int k;
+	for(k=0;k<1000;k++)
+	{
+		allFiles[k].data=malloc(100);
+		allFiles[k].string_row=malloc(1000);
+	}
 	pthread_mutex_init(&running_mutex, NULL);
 	char * in_dir = malloc(1000);
 	outdir_global = malloc(1000);
@@ -623,7 +635,7 @@ int main(int argc, char *argv[]) {
 	
 	printf("before my added stuff in main() %d\n",arrCounter);
 	fflush(stdout);
-	CSVRow* help=malloc(sizeof(CSVRow*)*500);
+	CSVRow* help=malloc(sizeof(CSVRow*)*1000);
 	for(i=0;i<100;i++)
 	{
 		help[i].data=malloc(100);
@@ -634,6 +646,7 @@ int main(int argc, char *argv[]) {
 	fprintf(finalOut,"%s",header);
 	callMe(arrCounter,dataType,allFiles,help);
 	printf("aft\n");
+	fflush(stdout);
 	for(i=0;i<arrCounter;i++)
 	{
 		printf(">%d: ",i);
