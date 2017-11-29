@@ -544,7 +544,7 @@ int display_info_threaded(const char *fpath, const struct stat *sb, int tflag) {
 
 
 int count_files(const char *fpath, const struct stat *sb, int tflag) { //Check how many files there are to malloc
-	printf("fpath : %s \n ", fpath);
+	//printf("fpath : %s \n ", fpath);
 	++numoffiles;
 	return 0;
 }
@@ -689,7 +689,7 @@ int main(int argc, char *argv[]) {
 	int xi;
 	int xj;
 	int dacount = 0;
-	printf("%d\n", numoffiles);
+	//printf("%d\n", numoffiles);
 	for(xi = 0; all_files[xi].row != NULL; xi++) {	
 		for(xj = 1; all_files[xi].row[xj].data != NULL;  xj++){
 			final_all_files[dacount] = all_files[xi].row[xj];	
@@ -699,7 +699,7 @@ int main(int argc, char *argv[]) {
 	
 	pFile = fopen (out_filename,"a");
 
-	callMe(largest_file_count,'s',final_all_files,all_temp);	
+	callMe(dacount,'s',final_all_files,all_temp);	
 
 	if (pFile!=NULL){
 	//fprintf(pFile,"\n%s",test_string);	
