@@ -743,9 +743,9 @@ int main(int argc, char *argv[]) {
     }
 
     //printf("kika\n");  
-	printf("Main PID: %d\n",getpid());
+	printf("Initial PID: %d\n",getpid());
     int lolo = 0;
-	printf("All TIDS: ");
+	printf("TIDS of all child threads: ");
 	
 	for(lolo = 0; lolo <  numoffiles - 1; lolo++) {	
 	    //printf("k\n");	
