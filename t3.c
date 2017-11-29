@@ -20,7 +20,7 @@ CSVFile * all_files;
 int index_files = 0;
 int largest_file_count = 0;
 char data_type = 'c';
-
+int * file_sizes;
 
 void mergeStr(CSVRow* arr,CSVRow* help, int lptr,int rptr,int llimit,int rlimit,int num)
 {
@@ -442,7 +442,8 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 	pthread_mutex_lock(&running_mutex);
 
 	all_files[index_files].row = movies;
-	index_files++;
+	file_sizes[index_files] = file_count;
+    index_files++;
 
 	pthread_mutex_unlock(&running_mutex);
 	/*
@@ -509,7 +510,7 @@ void file_test(char * filename, char * out_dir, char * sort_type) { //Test mutex
 
 	
 	sortCSVFile(filename ,sort_type , out_dir);
-
+    //printf("hia\n");
 	
 	//free(test_string);
 	//free(out_filename);
@@ -537,9 +538,15 @@ int display_info_threaded(const char *fpath, const struct stat *sb, int tflag) {
 	args2->file_path = strdup(fpath);
 	args2->out_dir = strdup(outdir_global);
 	args2->sort_type = strdup(type_global);
+    
+    pthread_mutex_lock(&running_mutex);
 
 	pthread_create(&threads[index_threads++], NULL, &display_info2,(void *) args2);
-	return 0;
+	//printf("%d \n", &threads[index_threads]);
+
+    pthread_mutex_unlock(&running_mutex);
+
+    return 0;
 }
 
 
@@ -649,9 +656,11 @@ int main(int argc, char *argv[]) {
 	
 	int x = ftw(in_dir, count_files, 0);
     
-	numoffiles++;
-	threads = malloc(sizeof(pthread_t) * numoffiles);
+    numoffiles++;
+	
+    threads = malloc(sizeof(pthread_t) * numoffiles);
 	all_files = malloc(sizeof(CSVFile) * numoffiles);
+    file_sizes = malloc(sizeof(int) * numoffiles);
 
 	if(threads == NULL){
 		fprintf(stderr,"<ERROR> : Too many expected threads, out of memory");
@@ -666,13 +675,19 @@ int main(int argc, char *argv[]) {
 		free(in_dir);
 		exit(EXIT_FAILURE);
     }
-  	
 
-	for( index_threads = 0; index_threads <  numoffiles; index_threads++) {	
-		pthread_join(threads[index_threads], NULL);	
+    //printf("kika\n");  
+
+    int lolo = 0;
+	for(lolo = 0; lolo <  numoffiles - 1; lolo++) {	
+	    //printf("k\n");	
+         
+        pthread_join(threads[lolo], NULL);	
 	}
 
-	CSVRow * final_all_files = malloc(sizeof(CSVRow) * largest_file_count * numoffiles);
+	//printf("kom\n");
+    
+    CSVRow * final_all_files = malloc(sizeof(CSVRow) * largest_file_count * numoffiles);
 	
 	CSVRow * all_temp = malloc(sizeof(CSVRow) * largest_file_count * numoffiles);
 	
@@ -692,25 +707,32 @@ int main(int argc, char *argv[]) {
 	//printf("%d\n", index_files);
 	//if(all_files[1].row == NULL){
 
-	//printf("k");
+	//printf("kik\n");
 	//}
-	for(xi = 0; xi < index_files; xi++) {	
-		printf("KK\n");	
-		for(xj = 1; all_files[xi].row[xj].data != NULL;  xj++){
+	
+    for(xi = 0; xi < index_files; xi++) {	
+		//printf("KK\n");	
+		for(xj = 1; xj < file_sizes[xi];  xj++){
 			final_all_files[dacount] = all_files[xi].row[xj];	
 			dacount++;
 		}
 	}
+
+    //printf("kikpo\n");
 	
 	pFile = fopen (out_filename,"a");
 
-	callMe(dacount,data_type,final_all_files,all_temp);	
+   // printf("chaja\n");
 
+	callMe(dacount,data_type,final_all_files,all_temp);	
+    
+    //printf("kaka\n");
 	if (pFile!=NULL){
 	//fprintf(pFile,"\n%s",test_string);	
 		fprintf(pFile, "\n");
 		int j;
-		for(j = 0; final_all_files[j].data != NULL; j++){
+
+		for(j = 0; j < dacount; j++){
 			//printf("%d\n", j);
 			fprintf(pFile, "%s", final_all_files[j].string_row);
 		}
