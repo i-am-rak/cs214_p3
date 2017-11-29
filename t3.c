@@ -743,9 +743,9 @@ int main(int argc, char *argv[]) {
 	for(lolo = 0; lolo <  numoffiles - 1; lolo++) {	
 	    //printf("k\n");	
         pthread_join(threads[lolo], NULL);	
-        printf("%u, ",threads[lolo]); 
+        fprintf(stdout,"%u, ",threads[lolo]); 
 	}
-	//printf("kom\n");
+	fprintf(stdout,"\nTotal number of threads: %d\n", lolo);
     
     CSVRow * final_all_files = malloc(sizeof(CSVRow) * largest_file_count * numoffiles);
 	
