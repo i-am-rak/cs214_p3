@@ -463,8 +463,8 @@ void sortCSVFile(char * filename1,char * token1, char * outdir1){
 	callMe(file_count,type,movies,help);
 	
 	char * out_filename = malloc(100);
-
 	sprintf(out_filename, "%s/AllFiles-sorted-%s.csv", outdir1, token1);
+
 
 	pthread_mutex_lock(&running_mutex);
 
@@ -537,7 +537,7 @@ void file_test(char * filename, char * out_dir, char * sort_type) { //Test mutex
 
 	
 	sortCSVFile(filename ,sort_type , out_dir);
-    //printf("hia\n");
+    printf("hia\n");
 	
 	//free(test_string);
 	//free(out_filename);
